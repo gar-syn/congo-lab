@@ -10,13 +10,14 @@ with open('requirements.txt') as f:
 setuptools.setup(
     name="octopus",
     version="0.3",
-    author="Richard Ingham",
+    author="Richard Ingham, Gary Short",
     description="Real-time laboratory automation and monitoring in Python.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/richardingham/octopus",
     packages=find_packages(where='src', exclude=['*.test']),
     package_dir={'': 'src'},
+    install_requires=requirements,
     include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3.8",
