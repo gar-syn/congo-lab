@@ -8,13 +8,13 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 setuptools.setup(
-    name="octopus",
-    version="0.3",
+    name="congo-lab",
+    version="0.4",
     author="Richard Ingham, Gary Short",
     description="Real-time laboratory automation and monitoring in Python.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/richardingham/octopus",
+    url="https://github.com/gar-syn/congo-lab",
     packages=find_packages(where='src', exclude=['*.test']),
     package_dir={'': 'src'},
     install_requires=requirements,
