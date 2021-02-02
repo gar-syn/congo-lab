@@ -65,5 +65,6 @@ twistd.pid
 container_data/*
 !container_data/.gitkeep 
 .vscode/*
+.venv/*
 
 .DS_Store
