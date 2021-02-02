@@ -4,4 +4,4 @@ A fork of the Octopus project [LINK](https://github.com/richardingham/octopus) s
 
 ## Documentation
 
-[Legacy documentation](doc/Octopus Documentation.md)
+[Legacy documentation](doc/Octopus%20Documentation.md)
