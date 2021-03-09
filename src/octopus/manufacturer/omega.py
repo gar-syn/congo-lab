@@ -110,16 +110,6 @@ class HH306A (Machine):
     def stop (self):
         self._stopTicks()
 
-# Twisted Imports
-from twisted.internet import defer
-from twisted.internet.protocol import Factory
-
-# Package Imports
-from octopus.util import now
-from octopus.machine import Machine, Stream, Property
-from octopus.protocol.basic import QueuedLineReceiver
-
-
 #
 # Serial Settings for RDXL4SD
 # -----------------------------------
