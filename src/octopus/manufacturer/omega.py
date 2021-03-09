@@ -109,3 +109,80 @@ class HH306A (Machine):
 
     def stop (self):
         self._stopTicks()
+
+# Twisted Imports
+from twisted.internet import defer
+from twisted.internet.protocol import Factory
+
+# Package Imports
+from octopus.util import now
+from octopus.machine import Machine, Stream, Property
+from octopus.protocol.basic import QueuedLineReceiver
+
+
+#
+# Serial Settings for RDXL4SD
+# -----------------------------------
+#
+# Baud rate 9600 bps
+# Data bits 8         Parity       None
+# Stop bits 1         Flow control None
+#
+# Protocol type   Raw TCP
+#
+# Sample Data
+# -----------------------------------
+# 41010100000223
+#
+# Broken Down
+# -----------------------------------
+# 4
+# 1 - Thermocouple port
+# 01 - UoM
+# 0 - Polarity
+# 1 - Decimal point
+# 00000223 - Reading
+
+class RDXL4SD(Machine):
+
+    protocolFactory = Factory.forProtocol(QueuedLineReceiver)
+    name = "Omega RDXL4SD"
+
+    def setup (self):
+
+        # setup variables
+        self.temp1 = Stream(title = "Temperature 1", type = float, unit = "C")
+        self.temp2 = Stream(title = "Temperature 2", type = float, unit = "C")
+        self.temp3 = Stream(title = "Temperature 3", type = float, unit = "C")
+        self.temp4 = Stream(title = "Temperature 4", type = float, unit = "C")
+
+        def start (self):
+            def interpret_temperature (result: str):
+
+                thermocouple_port = result[1]
+                thermocouple_uom = result[2:4]
+                thermocouple_polarity = result[4]
+                thermocouple_dp = result[5]
+                thermocouple_val = result[6:len(result)]
+
+                treated_val = float(thermocouple_val[0:len(thermocouple_val)-thermocouple_dp] + '.' + thermocouple_val[-thermocouple_dp])
+
+                if thermocouple_port == '1':
+                    self.temp1._push(treated_val)
+                elif thermocouple_port == '2':
+                    self.temp2._push(treated_val)
+                elif thermocouple_port == '3':
+                    self.temp3._push(treated_val)
+                elif thermocouple_port == '4':
+                    self.temp4._push(treated_val)
+
+            def monitor_temperature ():
+                self.protocol.write("O8").addCallback(interpret_temperature)
+
+            self._tick(monitor_temperature, 1)
+
+    def stop (self):
+        self._stopTicks()
+
+    def reset (self):
+        return defer.succeed('OK')

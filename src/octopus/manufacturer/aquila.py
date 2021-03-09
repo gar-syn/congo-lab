@@ -154,82 +154,6 @@ class CGQuantLineReceiver (LineOnlyReceiver):
         if self.listener is not None:
             self.listener(packet)
 
-# class CGQuantDataPipeLineReceiver (LineOnlyReceiver):
-#     delimiter = b'\n'
-
-#     def __init__ (self):
-#         self.listeners = []
-
-#     def lineReceived (self, line: bytes):
-#         # line: '2020-10-08 20:12:17\tBase=0\tInputNo=0\tExperimentTime[s]=23\tBackscatter[au]=374.232\tTemperature[Â°C]=30.08\tShakingSpeed[rpm]=248.18\tGrowthRate[1/h]=-0.02615\n'
-#         parts = [p.split('=')[-1] for p in line.decode('ascii').strip().split('\t')]
-
-#         if len(parts) != 8:
-#             print (f"Incomplete packet received from CGQuant: {line.decode('ascii')!r}")
-#             return
-
-#         packet = CGQuantDataPacket(
-#             time = parts[0],
-#             base = int(parts[1]),
-#             input = int(parts[2]),
-#             experimenttime = float(parts[3]),
-#             backscatter = float(parts[4]),
-#             temperature = float(parts[5]),
-#             shakingspeed = float(parts[6]),
-#             growthrate = float(parts[7])
-#         )
-
-#         print ('CGQ packet', packet)
-
-#         for protocol in self.listeners:
-#             try:
-#                 protocol.packetReceived(packet)
-#             except AttributeError:
-#                 print('Listener does not have a packetReceived method.')
-    
-#     def addListener (self, protocol: CGQuantSingleInputReceiver):
-#         print('Adding a listener to the CGQuantDataPipeLineReceiver.')
-#         if protocol not in self.listeners:
-#             self.listeners.append(protocol)
-
-
-# class CGQuantInputFactory (Factory):
-#     protocol = CGQuantSingleInputReceiver
-    
-#     def __init__ (self):
-#         self._reader_protocol = None
-#         # self._reader_protocol_listeners = []
-
-#     # def startFactory (self):
-#     def _start (self):
-#         print('CGQuantInputFactory _start')
-#         self._reader_protocol = CGQuantDataPipeLineReceiver()
-#         self._reader = SelectableFile(fp = open(CGQUANT_DATA_PIPE, 'r'), protocol = self._reader_protocol)
-#         reactor.addReader(self._reader)
-
-#         # for p in self._reader_protocol_listeners:
-#         #     self._reader_protocol.addListener(p)
-
-#     # def stopFactory (self):
-#     def __del__ (self):
-#         print ('CGQuantInputFactory __del__')
-#         reactor.removeReader(self._reader)
-#         self._reader = None
-
-#     def buildProtocol (self, addr):
-#         if self._reader_protocol is None:
-#             self._start()
-            
-#         p = self.protocol(addr)
-#         p.factory = self
-
-#         # if self._reader_protocol is not None:
-#         self._reader_protocol.addListener(p)
-#         # else:
-#             # self._reader_protocol_listeners.append(p)
-
-#         return p
-
 class _SetBaseInputFactory (Factory):
     def __init__ (self, factory: Factory, base: int, input: int):
         self.base = base
@@ -274,27 +198,6 @@ class cgq_tcp_input (object):
 
     def connect (self, factory):
         return self.point.connect(_SetBaseInputFactory(factory, self.base, self.input))
-
-    # def connect(self, protocolFactory):
-    #     """
-    #     Implement L{IStreamClientEndpoint.connect} to connect via TCP.
-    #     """
-    #     try:
-    #         wf = _WrappingFactory(protocolFactory)
-    #         self._reactor.connectTCP(
-    #             self._host, self._port, wf,
-    #             timeout=self._timeout, bindAddress=self._bindAddress)
-    #         return wf._onConnection
-    #     except:
-    #         return defer.fail()
-
-    # def connect (self, factory):
-    #   protocol = factory.buildProtocol(addr)
-
-    #   # self._serial = self._factory(protocol, self.port, reactor, self.baudrate, **self._args)
-
-    #   return protocol
-
 
 class CGQ (Machine):
     """
