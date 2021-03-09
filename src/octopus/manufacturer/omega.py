@@ -6,7 +6,7 @@ from twisted.python import log
 # Package Imports
 from ..machine import Machine, Stream, ui
 from ..util import now
-from ..protocol.basic import VaryingDelimiterQueuedLineReceiver
+from ..protocol.basic import VaryingDelimiterQueuedLineReceiver, QueuedLineReceiver
 
 __all__ = ["HH306A"]
 
