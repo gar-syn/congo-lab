@@ -3,10 +3,12 @@ from twisted.internet import defer
 from twisted.internet.protocol import Factory
 from twisted.python import log
 
+import logging
+
 # Package Imports
 from ..machine import Machine, Stream, ui
 from ..util import now
-from ..protocol.basic import VaryingDelimiterQueuedLineReceiver, QueuedLineReceiver
+from ..protocol.basic import VaryingDelimiterQueuedLineReceiver, QueuedLineReceiver, LineOnlyReceiver
 
 __all__ = ["HH306A"]
 
@@ -133,9 +135,46 @@ class HH306A (Machine):
 # 1 - Decimal point
 # 00000223 - Reading
 
+class PrintLineReceiver (LineOnlyReceiver):
+    delimiter = b"\r"
+    val_array = [0,0,0,0]
+
+    def __init__ (self):
+        self.listener = None
+
+    def setListener (self, listener):
+        self.listener = listener
+
+    def lineReceived (self, line: bytes):
+        # self._log(str(line.decode("UTF-8")), logging.DEBUG)
+
+        line = line.replace(b'\x02', b'').replace(b'\x18', b'0').decode()
+
+        thermocouple_port = line[1]
+        thermocouple_uom = line[2:4]
+        thermocouple_polarity = line[4]
+        thermocouple_dp = int(line[5])
+        thermocouple_val = line[6:len(line)]
+
+        treated_val = float(thermocouple_val[0:len(thermocouple_val)-thermocouple_dp] + '.' + thermocouple_val[-thermocouple_dp])
+
+        if thermocouple_port == '1':
+            self.val_array[0] = treated_val
+        elif thermocouple_port == '2':
+            self.val_array[1] = treated_val
+        elif thermocouple_port == '3':
+            self.val_array[2] = treated_val
+        elif thermocouple_port == '4':
+            self.val_array[3] = treated_val
+
+        # log.msg(self.val_array, logging.DEBUG)
+
+        if self.listener is not None:
+            self.listener(self.val_array)
+
 class RDXL4SD(Machine):
 
-    protocolFactory = Factory.forProtocol(QueuedLineReceiver)
+    protocolFactory = Factory.forProtocol(PrintLineReceiver)
     name = "Omega RDXL4SD"
 
     def setup (self):
@@ -146,30 +185,16 @@ class RDXL4SD(Machine):
         self.temp3 = Stream(title = "Temperature 3", type = float, unit = "C")
         self.temp4 = Stream(title = "Temperature 4", type = float, unit = "C")
 
-        def start (self):
-            def interpret_temperature (result: str):
+    def start (self):
+        def interpret_temperature (result):
+            # log.msg("Hello", logging.DEBUG)
 
-                thermocouple_port = result[1]
-                thermocouple_uom = result[2:4]
-                thermocouple_polarity = result[4]
-                thermocouple_dp = result[5]
-                thermocouple_val = result[6:len(result)]
+            self.temp1._push(result[0])
+            self.temp2._push(result[1])
+            self.temp3._push(result[2])
+            self.temp4._push(result[3])
 
-                treated_val = float(thermocouple_val[0:len(thermocouple_val)-thermocouple_dp] + '.' + thermocouple_val[-thermocouple_dp])
-
-                if thermocouple_port == '1':
-                    self.temp1._push(treated_val)
-                elif thermocouple_port == '2':
-                    self.temp2._push(treated_val)
-                elif thermocouple_port == '3':
-                    self.temp3._push(treated_val)
-                elif thermocouple_port == '4':
-                    self.temp4._push(treated_val)
-
-            def monitor_temperature ():
-                self.protocol.write("O8").addCallback(interpret_temperature)
-
-            self._tick(monitor_temperature, 1)
+        self.protocol.setListener(interpret_temperature)
 
     def stop (self):
         self._stopTicks()
