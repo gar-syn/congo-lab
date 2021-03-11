@@ -1,8 +1,9 @@
 # Twisted Imports
-from twisted.internet import reactor, defer
+from twisted.internet import reactor, defer, task
 from twisted.internet.error import TimeoutError, AlreadyCalled, AlreadyCancelled
 from twisted.protocols.basic import LineOnlyReceiver
-from twisted.python import log, failure
+from twisted.python import failure
+from twisted.logger import Logger
 
 # System Imports
 from collections import deque
@@ -10,15 +11,6 @@ import logging
 
 # Package Imports
 from ..queue import AsyncQueue, AsyncQueueRetry
-
-
-class _Command (object):
-    def __init__ (self, index: int, line: str, expectReply: bool, wait):
-        self.index = index
-        self.line = line
-        self.expectReply = bool(expectReply)
-        self.wait = float(wait)
-        self.d = defer.Deferred()
 
 
 def _IndexGenerator (max):
@@ -32,10 +24,21 @@ def _IndexGenerator (max):
 
 class QueuedLineReceiver (LineOnlyReceiver):
 
-    timeoutDuration = 1
+    class Command (dict):
+        def __getattr__ (self, attr):
+            return self[attr]
+
+        def __setattr__ (self, attr, value):
+            self[attr] = value
+
+    timeout = 1
+    character_delay = 0
+    max_command_length = 1000
+    log = Logger()
 
     def __init__ (self):
         self.connection_name = "disconnected"
+        self.machine_alias = "machine"
 
         self.queue = AsyncQueue(self._advance, paused = True)
         self.index = _IndexGenerator(2 ** 16)
@@ -51,29 +54,54 @@ class QueuedLineReceiver (LineOnlyReceiver):
     def connectionLost (self, reason):
         self.queue.pause()
 
-    def _log (self, msg, level = None):
-        log.msg(
-            "QueuedLineReceiver [{!s}]: {!s}".format(
-                self.connection_name,
-                msg
-            ),
-            logLevel = level
-        )
-
     def write (self, line, expectReply = True, wait = 0):
-        command = _Command(next(self.index), line, expectReply, wait)
+        d = defer.Deferred()
+
+        if len(line) > self.max_command_length:
+            raise ValueError(
+                'Command string is too long. Max {:s} characters'.format(
+                    self.max_command_length
+                )
+            )
+
+        command = self.Command(
+            index = next(self.index),
+            line = line,
+            expectReply = expectReply,
+            wait = float(wait),
+            d = d
+        )
         self.queue.append(command)
 
-        return command.d
+        self.log.debug(
+            "{log_source.machine_alias!s} [{log_source.connection_name!s}] queued command ({command.index}) {command.line!r}",
+            action = 'queue',
+            command = command,
+            queue_len = len(self.queue)
+        )
 
-    def _advance (self, command: _Command):
+        return d
+
+    def _advance (self, command):
         self._current = command
         self._queue_d = defer.Deferred()
+        
+        self.log.debug(
+            "{log_source.machine_alias!s} [{log_source.connection_name!s}] sent command ({command.index}) {command.line!r}",
+            action = 'send',
+            command = command
+        )
 
-        self.sendLine(command.line.encode('ascii'))
+        if self.character_delay > 0:
+            self.sendLine(command.line.encode('ascii') + self.delimiter)
+        else:
+            self.transport.write(command.line.encode('ascii') + self.delimiter)
 
         if command.expectReply:
-            self._timeout = reactor.callLater(self.timeoutDuration, self._timeoutCurrent)
+            self._timeout = reactor.callLater(
+                (len(command.line) * self.character_delay) + self.timeout,
+                self._timeoutCurrent
+            )
 
         else:
             # Avoid flooding the network or the device.
@@ -82,6 +110,12 @@ class QueuedLineReceiver (LineOnlyReceiver):
             reactor.callLater(max(command.wait, 0.03), self._queue_d.callback, None)
 
         return self._queue_d
+
+    @defer.inlineCallbacks
+    def sendLine (self, line: bytes):
+        for character in line:
+            self.transport.write(character)
+            yield task.deferLater(reactor, self.character_delay, lambda: True)
 
     def dataReceived (self, data: bytes):
         self._buffer += data
@@ -100,30 +134,52 @@ class QueuedLineReceiver (LineOnlyReceiver):
             self._timeout.cancel()
 
             command = self._current
-            reactor.callLater(command.wait, command.d.callback, line.decode('ascii'))
+
+            self.log.debug(
+                "{log_source.machine_alias!s} [{log_source.connection_name!s}] received response ({command.index}) {response!r}",
+                action = 'receive',
+                command = command,
+                response = line
+            )
+
+            reactor.callLater(command.wait, command.d.callback, self.processLine(line.decode('ascii')))
             reactor.callLater(command.wait, self._queue_d.callback, None)
 
         except (AttributeError, AlreadyCalled, AlreadyCancelled):
             # Either a late response or an unexpected Message
-            return self.unexpectedMessage(line)
+            self.log.debug(
+                "{log_source.machine_alias!s} [{log_source.connection_name!s}] received unexpected response {response!r}",
+                action = 'unexpected',
+                response = line
+            )
+
+            return self.unexpectedMessage(line.decode('ascii'))
 
         finally:
             self._current = None
             self._queue_d = None
             self._timeout = None
 
-    def unexpectedMessage (self, line):
+    def processLine (self, line: str):
+        return line
+
+    def unexpectedMessage (self, line: bytes):
         pass
 
     def _timeoutCurrent (self):
         try:
-            self._log("Timed Out: {!s}".format(self._current.line), logging.ERROR)
+            self.log.error(
+                "{log_source.machine_alias!s} [{log_source.connection_name!s}] command timed out ({command.index}) {command.line!r}",
+                action = 'timeout',
+                command = self._current
+            )
             self._current.d.errback(TimeoutError(self._current.line))
             self._queue_d.errback(TimeoutError(self._current.line))
 
         except AttributeError:
             # There is actually no current command
             pass
+
 
 class VaryingDelimiterQueuedLineReceiver (QueuedLineReceiver):
 
@@ -279,15 +335,6 @@ class VaryingDelimiterQueuedLineReceiver (QueuedLineReceiver):
 
                     self._buffer = self._buffer[end + current.endDelimiterLength:]
                     self.lineReceived(line.decode('ascii'))
-
-            elif self.debug:
-                self.log.debug(
-                    "{log_source.machine_alias!s} [{log_source.connection_name!s}] waiting for length {command.length!r}",
-                    action = 'waiting',
-                    command = current,
-                    buffer = self._buffer
-                )
-
 
         # If no length was specified, look for the end delimiter
         elif current.endDelimiter is not None \

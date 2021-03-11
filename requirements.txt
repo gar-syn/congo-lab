@@ -12,3 +12,4 @@ SimpleCV
 opencv-python
 requests
 bcrypt
+crccheck

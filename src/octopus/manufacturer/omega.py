@@ -164,6 +164,7 @@ class PrintLineReceiver (LineOnlyReceiver):
         self.val_updated[thermocouple_port] = True
 
         if self.listener is not None and all(self.val_updated):
+            log.msg(self.val_list, logging.DEBUG)
             self.listener(self.val_list)
             self.val_updated = [False] * (len(self.val_updated))
 

@@ -6,7 +6,7 @@ from twisted.internet.protocol import Factory
 from time import time as now
 
 # Sibling Imports
-from .data import ImageProperty, DerivedImageProperty
+from .data import ImageProperty, DerivedImageProperty, Image
 
 # Package Imports
 from ..machine import Machine, Property, Stream, ui
@@ -119,7 +119,7 @@ class MultiBlobTracker (Machine):
             setattr(self, "height%s" % (i + 1), stream)
             self._heights.append(stream)
 
-        self.image = Image(title = "Tracked", fn = self._get_image)
+        self.image = Image(title = "Tracked", data = self._get_image)
         self.visualisation = DerivedImage(title = "Visualisation")
         self.status = Property(title = "Status", type = str)
 

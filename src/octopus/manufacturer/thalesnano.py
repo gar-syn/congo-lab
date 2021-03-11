@@ -286,7 +286,7 @@ class HCube (Machine):
             if result == "OK":
                 reactor.callLater(5, self.stop)
             else:
-                defer.errback(Exception("Unable to shut down H-Cube"))
+                d.errback(Exception("Unable to shut down H-Cube"))
 
         self.protocol.write("BC=06")\
             .addCallbacks(stop, d.errback)

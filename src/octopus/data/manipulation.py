@@ -29,7 +29,7 @@ _counter = _Counter()
 class Function (data.Variable):
     def __init__ (self, expr):
         if not isinstance(expr, data.Variable):
-            raise data.InvalidType
+            raise data.errors.InvalidType
 
         self._expr = expr
 
@@ -54,9 +54,9 @@ class Function (data.Variable):
         y_vals = self.interp(start, interval, step)
 
         try:
-            return list(zip(x_vals.tolist(), y_vals.tolist()))
+            return np.array(list(zip(x_vals.tolist(), y_vals.tolist())))
         except (TypeError, ValueError):
-            return list(zip(x_vals.tolist(), [None] * len(x_vals)))
+            return np.array(list(zip(x_vals.tolist(), [None] * len(x_vals))))
 
     def interp (self, start, interval, step):
         raise NotImplementedError
@@ -106,7 +106,7 @@ class Max (FramedManipulation):
         return np.max(self._expr.interp(-self._frame, self._frame, 0.1))
 
     def serialize (self):
-        return " Max (" + self._expr.serialize() + ", " + str(frame) + ")"
+        return " Max (" + self._expr.serialize() + ", " + str(self._frame) + ")"
 
 
 class Min (FramedManipulation):
@@ -119,7 +119,7 @@ class Min (FramedManipulation):
         return np.min(self._expr.interp(-self._frame, self._frame, 0.1))
 
     def serialize (self):
-        return " Min (" + self._expr.serialize() + ", " + str(frame) + ")"
+        return " Min (" + self._expr.serialize() + ", " + str(self._frame) + ")"
 
 
 class Smooth (FramedManipulation):
@@ -161,7 +161,7 @@ class Smooth (FramedManipulation):
             return None
 
     def serialize (self):
-        return " Smooth (" + self._expr.serialize() + ", " + str(frame) + ")"
+        return " Smooth (" + self._expr.serialize() + ", " + str(self._frame) + ")"
 
 ## average?
 

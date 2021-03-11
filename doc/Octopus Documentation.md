@@ -115,6 +115,10 @@ connect to this pump as described earlier:
 >>> pump = knauer.K120(serial("/dev/ttyUSB0", baudrate = 9600))
 ```
 
+from octopus.manufacturer import omega
+temp = omega.RDXL4SD(serial("/dev/ttyUSB0", baudrate = 9600))
+temp.temp1
+
 The Knauer K120 has the following properties:
 
 `pump.status` - Read-only string, can have values `"ok"`, 

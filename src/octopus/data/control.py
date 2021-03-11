@@ -184,5 +184,5 @@ class Number (Control):
             return None
 
     @max.setter
-    def min (self, value):
+    def max (self, value):
         self._max = value
