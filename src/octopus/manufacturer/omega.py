@@ -1,16 +1,17 @@
+import logging
+from itertools import groupby
+
 # Twisted Imports
 from twisted.internet import defer
 from twisted.internet.protocol import Factory
 from twisted.python import log
 
-import logging
-
 # Package Imports
 from ..machine import Machine, Stream, ui
 from ..util import now
-from ..protocol.basic import VaryingDelimiterQueuedLineReceiver, QueuedLineReceiver, LineOnlyReceiver
+from ..protocol.basic import VaryingDelimiterQueuedLineReceiver, LineOnlyReceiver
 
-__all__ = ["HH306A"]
+__all__ = ["HH306A", "RDXL4SD"]
 
 
 # Connection: 9600, 8N1
@@ -130,14 +131,15 @@ class HH306A (Machine):
 # -----------------------------------
 # 4
 # 1 - Thermocouple port
-# 01 - UoM
+# 01 - UoM 01=C 02=F
 # 0 - Polarity
 # 1 - Decimal point
 # 00000223 - Reading
 
 class PrintLineReceiver (LineOnlyReceiver):
     delimiter = b"\r"
-    val_array = [0,0,0,0]
+    val_list = [0,0,0,0]
+    val_updated = [False, False, False, False]
 
     def __init__ (self):
         self.listener = None
@@ -146,31 +148,24 @@ class PrintLineReceiver (LineOnlyReceiver):
         self.listener = listener
 
     def lineReceived (self, line: bytes):
-        # self._log(str(line.decode("UTF-8")), logging.DEBUG)
-
         line = line.replace(b'\x02', b'').replace(b'\x18', b'0').decode()
 
-        thermocouple_port = line[1]
-        thermocouple_uom = line[2:4]
+        thermocouple_port = int(line[1])-1
+        thermocouple_uom = int(line[2:4])
         thermocouple_polarity = line[4]
         thermocouple_dp = int(line[5])
         thermocouple_val = line[6:len(line)]
 
         treated_val = float(thermocouple_val[0:len(thermocouple_val)-thermocouple_dp] + '.' + thermocouple_val[-thermocouple_dp])
+        if thermocouple_polarity == 1:
+            treated_val = -treated_val
 
-        if thermocouple_port == '1':
-            self.val_array[0] = treated_val
-        elif thermocouple_port == '2':
-            self.val_array[1] = treated_val
-        elif thermocouple_port == '3':
-            self.val_array[2] = treated_val
-        elif thermocouple_port == '4':
-            self.val_array[3] = treated_val
+        self.val_list[thermocouple_port] = treated_val
+        self.val_updated[thermocouple_port] = True
 
-        # log.msg(self.val_array, logging.DEBUG)
-
-        if self.listener is not None:
-            self.listener(self.val_array)
+        if self.listener is not None and all(self.val_updated):
+            self.listener(self.val_list)
+            self.val_updated = [False] * (len(self.val_updated))
 
 class RDXL4SD(Machine):
 
@@ -187,8 +182,6 @@ class RDXL4SD(Machine):
 
     def start (self):
         def interpret_temperature (result):
-            # log.msg("Hello", logging.DEBUG)
-
             self.temp1._push(result[0])
             self.temp2._push(result[1])
             self.temp3._push(result[2])
