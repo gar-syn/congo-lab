@@ -11,9 +11,6 @@ try:
 except ImportError:
     from urllib import urlencode
 
-# Sibling Imports
-import util as notifier_util
-
 class WebClientContextFactory(ClientContextFactory):
     def getContext(self, hostname, port):
         return ClientContextFactory.getContext(self)

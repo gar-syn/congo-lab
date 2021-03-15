@@ -21,7 +21,7 @@ def init_child (parent, child):
         try:
             child = Sequence(child)
         except TypeError:
-            raise Error("Argument must be an instance of Step or a list of Steps")
+            raise parent.error("Argument must be an instance of Step or a list of Steps")
 
     child.on("all", parent._bubbleEvent)
 
@@ -82,7 +82,6 @@ class Pausable (object):
 
         try:
             onResume, self._onResume = self._onResume, None
-            onResume()
         except (AttributeError, TypeError):
             pass
 
@@ -168,7 +167,7 @@ class Looping (Runnable, Pausable, Cancellable):
             self._schedule()
 
         def _error (failure):
-            self.state = state.ERROR
+            self.state = State.ERROR
 
         try:
             if self.state is State.PAUSED:
@@ -496,8 +495,7 @@ class Dependents (Dependent):
                 dependent.cancel()
 
             dependent.container = None
-
-        dep.off("all", self._bubbleEvent)
+        dependent.off("all", self._bubbleEvent)
 
     # Runnable
 

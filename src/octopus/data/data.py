@@ -248,7 +248,7 @@ class BaseVariable (EventEmitter):
             return type(None)
 
     def get_value (self):
-        return self._value
+        return self.value
 
     def __str__ (self):
         return str(self.get_value())

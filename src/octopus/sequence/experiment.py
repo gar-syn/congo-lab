@@ -10,7 +10,7 @@ from collections import deque
 
 # Sibling Imports
 from ..data import Variable as data_Variable
-from ..util import now, Event
+from ..util import now
 from ..events import Event
 from ..machine import Machine, Component
 from ..machine.interface import InterfaceSection, InterfaceSectionSet
@@ -331,12 +331,12 @@ class Experiment (object):
     #
     def log_variables (self, *variables):
         if self._logging is True:
-            raise Error ("Cannot set variables whilst actively logging")
+            raise self.error ("Cannot set variables whilst actively logging")
 
         self._log_variables = {}
 
         for v in variables:
-            if isinstance(v, data_Variable) and v.alias not in self._variables:
+            if isinstance(v, data_Variable) and v.alias not in self._log_variables:
                 self._log_variables[v.alias] = v
 
             elif isinstance(v, Component):
@@ -352,7 +352,7 @@ class Experiment (object):
 
             self._log_variables.update(self.interface.properties)
 
-        items = self._log_variables.iteritems()
+        items = self._log_variables.items()
 
         for key, var in items:
             try:
@@ -379,7 +379,7 @@ class Experiment (object):
     def stop_logging (self):
         self._logging = False
 
-        items = self._log_variables.iteritems()
+        items = self._log_variables.items()
 
         for key, var in items:
             try:

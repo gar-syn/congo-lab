@@ -101,7 +101,7 @@ class InterfaceSection (object):
         return {
             "name": self.name,
             "title": self.title,
-            "traces": [_trace(t) for t in self.traces.itervalues()],
+            "traces": [_trace(t) for t in self.traces.values()],
             "properties": [_prop(p) for p in self.properties if p.type not in ("Image",)],
             "images": [_img(p) for p in self.properties if p.type == "Image"],
             "controls": [_control(c) for c in self.controls]
@@ -148,7 +148,7 @@ class InterfaceSectionSet (OrderedDict):
         section = self[name]
 
         for c in section.controls:
-            del self.controls[p.alias]
+            del self.controls[c.alias]
             c.event -= self.event
 
         for p in section.properties:
@@ -162,10 +162,10 @@ class InterfaceSectionSet (OrderedDict):
                     pass
 
     def output (self):
-        return [x.output() for x in self.itervalues()]
+        return [x.output() for x in self.values()]
 
     def remove_listeners (self):
-        for c in self.controls.itervalues():
+        for c in self.controls.values():
             c.event -= self.event
 
 

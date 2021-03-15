@@ -1,13 +1,13 @@
 # Twisted Imports
 from twisted.python import log
-from twisted.internet.defer import maybeDeferred
+from twisted.internet import defer
 
 # Package Imports
 from ..constants import State
 from ..util import now
 
 # Sibling Imports
-from .util import Looping, Dependent
+from .util import Looping, Dependent, init_child
 from . import error
 
 
@@ -59,7 +59,7 @@ class Bind (Dependent):
         if callable(self.process):
             try:
                 new_val = self.process(self.expr)
-            except NoUpdate:
+            except self.NoUpdate:
                 return
         else:
             new_val = self.expr.value
@@ -73,7 +73,7 @@ class Bind (Dependent):
         if self.variable.value != new_val:
             # Return a value so that self._calls gets incremented,
             # swallow any errors to avoid terminating the loop.
-            return maybeDeferred(self.variable.set, new_val).addErrback(log.err)
+            return defer.maybeDeferred(self.variable.set, new_val).addErrback(log.err)
 
 
 class PID (Looping, Dependent):
@@ -209,7 +209,7 @@ class StateMonitor (Dependent):
 
     @trigger_step.setter
     def trigger_step (self, step):
-        self._trigger_step = util.init_child(self, step)
+        self._trigger_step = init_child(self, step)
 
     @property
     def reset_step (self):
@@ -217,7 +217,7 @@ class StateMonitor (Dependent):
 
     @reset_step.setter
     def reset_step (self, step):
-        self._reset_step = util.init_child(self, step)
+        self._reset_step = init_child(self, step)
 
     def __init__ (self, tests = None, trigger_step = None, reset_step = None, auto_reset = True, cancel_on_trigger = True, cancel_on_reset = True):
         Dependent.__init__(self)
@@ -304,16 +304,16 @@ class StateMonitor (Dependent):
 
     def _run (self):
         for test in self._tests:
-            test.on("change", _changed)
+            test.on("change", self._changed)
 
-        _changed()
+        self._changed()
 
     def _cancel (self, abort = False):
         self.reset_trigger()
 
         for test in self._tests:
             try:
-                test.off("change", _changed)
+                test.off("change", self._changed)
             except KeyError:
                 pass
 

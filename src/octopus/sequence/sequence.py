@@ -695,7 +695,7 @@ class CallStep (util.Caller, Step):
     def serialize (self):
         serialized = Step.serialize(self)
 
-        if instanceof(self._step, Step):
+        if instanceOf(self._step, Step):
             serialized["child"] = self._step.serialize()
 
         return serialized
