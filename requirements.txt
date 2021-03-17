@@ -4,6 +4,7 @@ numpy
 scipy 
 pyserial 
 xlsxwriter 
+cryptography 
 pyasn1 
 autobahn  
 pylint
