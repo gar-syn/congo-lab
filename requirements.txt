@@ -4,7 +4,7 @@ numpy
 scipy 
 pyserial 
 xlsxwriter 
-cryptography 
+cryptography==3.2.1
 pyasn1 
 autobahn  
 pylint
