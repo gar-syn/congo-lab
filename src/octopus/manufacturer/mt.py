@@ -46,17 +46,7 @@ class SICSBalance (Machine):
 
         # setup variables
         self.weight = Stream(title = "Weight", type = float, unit = "g")
-        self.status = Property(
-            title = "Status", 
-            type = str, 
-            options = ("ok", "busy", "overload", "underload")
-        )
-
-        self.ui = ui(
-            traces = [],
-            properties = [
-                self.weight
-            ]
+        self.status = Property(title = "Status", type = str, options = ("ok", "busy", "overload", "underload")
         )
 
     def start (self):
