@@ -115,7 +115,7 @@ def _set_setpoint (machine: IKAEurostar):
 
 class RCT5 (Machine):
 
-    protocolFactory = Factory.forProtocol(IKALineReceiver)
+    protocolFactory = Factory.forProtocol(QueuedLineReceiver)
     name = "IKA RCT 5"
 
     def setup (self):
