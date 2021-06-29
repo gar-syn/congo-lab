@@ -182,38 +182,38 @@ class RCT5 (Machine):
 
 def _set_stirrer_power (machine: RCT5):
     @defer.inlineCallbacks
-    def set_power (power: str):
+    def set_stirrer_power (power: str):
         if power == "on":
             yield machine.protocol.write("START_4", expectReply = False)
         else:
             yield machine.protocol.write("STOP_4", expectReply = False)
         
-        machine.power._push(power)
+        machine.stirrer_power._push(power)
 
-    return set_power
+    return set_stirrer_power
 
 def _set_heater_power (machine: RCT5):
     @defer.inlineCallbacks
-    def set_power (power: str):
+    def set_heater_power (power: str):
         if power == "on":
             yield machine.protocol.write("START_1", expectReply = False)
         else:
             yield machine.protocol.write("STOP_1", expectReply = False)
         
-        machine.power._push(power)
+        machine.heater_power._push(power)
 
-    return set_power
+    return set_heater_power
 
 def _set_stirrer_setpoint (machine: RCT5):
-    def set_setpoint (setpoint: float):
+    def set_stirrer_setpoint (setpoint: float):
         return machine.protocol.write(f"OUT_SP_4 {setpoint:.1f}", expectReply = False)
 
-    return set_setpoint
+    return set_stirrer_setpoint
 
 def _set_heater_setpoint (machine: RCT5):
-    def set_setpoint (setpoint: float):
+    def set_heater_setpoint (setpoint: float):
         return machine.protocol.write(f"OUT_SP_1 {setpoint:.1f}", expectReply = False)
 
-    return set_setpoint
+    return set_heater_setpoint
 
 __all__ = ["IKAEurostar", "RCT5"]
