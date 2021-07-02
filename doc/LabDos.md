@@ -12,16 +12,16 @@ Flow Control - None
 ```
 Description - Current Speed
 Command - IN_PV_00\r\n
-Unit - 1/min
+Unit - RPM
 Reply - IN_PV_00 00100\r\n
-Value - 1 1/min
+Value - 1 RPM
 ```
 ```
 Description - Set Speed
-Command - 01;OUT_SP_00 00100\r\n
-Unit - 1/min
-Reply - +1;OUT_SP_00 000100\r\n
-Value - 1 1/min
+Command - OUT_SP_00 +00100\r\n
+Unit - RPM
+Reply - OUT_SP_00 +00100\r\n
+Value - 1 RPM
 ```
 ```
 Description - Turn On/Off

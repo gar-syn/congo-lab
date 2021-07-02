@@ -176,7 +176,7 @@ def _set_power_l (machine: LabDos):
 def _set_setpoint_l (machine: LabDos):
     @defer.inlineCallbacks
     def set_setpoint (setpoint: float):
-        result = yield machine.protocol.write(f"OUT_SP_00 {int(setpoint * 100):05d}")
+        result = yield machine.protocol.write(f"OUT_SP_00 {int(setpoint * 100):+06d}")
         result_setpoint = int(result.split(';')[1].split(' ')[1]) / 100
         machine.target._push(result_setpoint)
 
