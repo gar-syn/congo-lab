@@ -187,4 +187,60 @@ def _set_setpoint_l (machine: LabDos):
 
     return set_setpoint
 
-__all__ = ["SyrDos", "LabDos"]
+class MultiValve(Machine):
+
+    protocolFactory = Factory.forProtocol(QueuedLineReceiver)
+    name = "HiTec-Zang MultiValve"
+
+    def setup (self):
+
+        # setup variables
+        self.position = Property(title = "Power", type = str, options = ("A>", "A<", "B>", "B<", "C>", "C<", "D>", "D<", "E>", "E<", "F>", "F<", "G>", "G<", "H>", "H<", "I>", "I<", "J>", "J<"), setter = _set_postiton(self))
+
+    def start (self):
+        pass
+
+    def stop (self):
+        pass
+
+    def reset (self):
+        return defer.succeed('OK')
+
+
+def _set_postiton (machine: MultiValve):
+    @defer.inlineCallbacks
+    def set_position (position: str):
+
+        positions = {"A>": "00",
+                     "A<": "01",
+                     "B>": "02",
+                     "B<": "03",
+                     "C>": "04",
+                     "C<": "05",
+                     "D>": "06",
+                     "D<": "07",
+                     "E>": "08",
+                     "E<": "09",
+                     "F>": "10",
+                     "F<": "11",
+                     "G>": "12",
+                     "G<": "13",
+                     "H>": "14",
+                     "H<": "15",
+                     "I>": "16",
+                     "I<": "17",
+                     "J>": "18",
+                     "J<": "19"}
+
+        result = yield machine.protocol.write(f"OUT_SP_00 {positions[position]}")
+
+        result_position = int(result.split(' ')[1])
+        if result_position != int(positions[position]):
+            raise Exception(f"Could not switch MultiValve to {position}")
+
+        machine.position._push(position)
+        return 'OK'
+
+    return set_position
+
+__all__ = ["SyrDos", "LabDos", "MultiValve"]
