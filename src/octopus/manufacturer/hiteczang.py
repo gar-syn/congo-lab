@@ -195,7 +195,7 @@ class MultiValve(Machine):
     def setup (self):
 
         # setup variables
-        self.position = Property(title = "Power", type = str, options = ("A>", "A<", "B>", "B<", "C>", "C<", "D>", "D<", "E>", "E<", "F>", "F<", "G>", "G<", "H>", "H<", "I>", "I<", "J>", "J<"), setter = _set_postiton(self))
+        self.position = Property(title = "Power", type = str, options = ("A>", "A<", "B>", "B<", "C>", "C<", "D>", "D<", "E>", "E<", "F>", "F<", "G>", "G<", "H>", "H<", "I>", "I<", "J>", "J<", "K>", "K<", "L>", "L<"), setter = _set_postiton(self))
 
     def start (self):
         pass
@@ -230,7 +230,11 @@ def _set_postiton (machine: MultiValve):
                      "I>": "16",
                      "I<": "17",
                      "J>": "18",
-                     "J<": "19"}
+                     "J<": "19",
+                     "K>": "20",
+                     "K<": "21",
+                     "L>": "22",
+                     "L<": "23"}
 
         result = yield machine.protocol.write(f"OUT_SP_00 {positions[position]}")
 
