@@ -235,7 +235,7 @@ def _set_postiton (machine: MultiValve):
         result = yield machine.protocol.write(f"OUT_SP_00 {positions[position]}")
 
         result_position = int(result.split(' ')[1])
-        if result_position != int(position):
+        if result_position != int(positions[position]):
             raise Exception(f"Could not switch MultiValve to {position}")
 
         machine.position._push(position)
