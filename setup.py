@@ -9,7 +9,7 @@ with open('requirements.txt') as f:
 
 setuptools.setup(
     name="congo-lab",
-    version="0.7.6",
+    version="0.7.7",
     author="Richard Ingham, Gary Short",
     description="Real-time laboratory automation and monitoring in Python.",
     long_description=long_description,
