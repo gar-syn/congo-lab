@@ -23,9 +23,12 @@ from octopus.protocol.basic import QueuedLineReceiver
 # G     +   107.39 g  ␍␊
 # G     +  1158.47 g  ␍␊
 
+class SartoriousReceiver (QueuedLineReceiver):
+    delimiter = b"\r\n"
+
 class Sartorious (Machine):
 
-    protocolFactory = Factory.forProtocol(QueuedLineReceiver)
+    protocolFactory = Factory.forProtocol(SartoriousReceiver)
     name = "Sartorious Balance"
 
     def setup (self):
