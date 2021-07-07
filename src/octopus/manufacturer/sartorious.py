@@ -57,3 +57,5 @@ class Sartorious (Machine):
 
     def tare (self):
         return self.protocol.write("T", expectReply = False, wait = 5)
+
+__all__ = ["Sartorious"]
