@@ -24,7 +24,7 @@ from octopus.protocol.basic import QueuedLineReceiver
 # G     +  1158.47 g  ␍␊
 
 class SartoriousReceiver (QueuedLineReceiver):
-    delimiter = b"\r\n"
+    delimiter = b'\n'
 
 class Sartorious (Machine):
 
