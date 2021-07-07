@@ -34,14 +34,10 @@ class Sartorious (Machine):
         self.weight = Stream(title = "Weight", type = float, unit = "g")
 
     def start (self):
-        def interpret_weight (result):
-            result_decoded = result.decode("utf-8")
-            result_unit = result_decoded[-3:]
 
-            if result_unit != "g":
-                raise Exception("Balance units should be set to grams.")
+        def interpret_weight (result: str) -> float:
 
-            result_value = float((result_decoded[-14:-4]).replace(" ", ""))
+            result_value = float((result[-14:-4]).replace(" ", ""))
 
             self.weight._push(result_value)
 
