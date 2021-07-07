@@ -31,6 +31,7 @@ class ColorSpace:
     HSV = 5
     XYZ  = 6
     YCrCb = 7
+    RADIOMETRIC = 8
     
 
 class Image:
@@ -82,13 +83,16 @@ class BaseImageProperty (BaseVariable):
         pass
 
     def __str__ (self):
+        from .functions import get_BGR_bitmap
+
         img = self.get_value()
 
         if img is None:
             return ''
 
         # Encode
-        is_success, buffer = cv2.imencode(".png", img.data)
+        # is_success, buffer = cv2.imencode(".png", img.data)
+        is_success, buffer = cv2.imencode(".png", get_BGR_bitmap(img))
         io_buf = BytesIO(buffer)
 
         encoded = "data:image/png;base64," + quote(base64.b64encode(io_buf.getvalue()).decode())
