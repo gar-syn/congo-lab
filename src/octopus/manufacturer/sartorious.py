@@ -23,13 +23,9 @@ from octopus.protocol.basic import QueuedLineReceiver
 # G     +   107.39 g  ␍␊
 # G     +  1158.47 g  ␍␊
 
-class SartoriousReceiver (QueuedLineReceiver):
-    start_delimiter = b'\n'
-    delimiter = b'\r'
-
 class Sartorious (Machine):
 
-    protocolFactory = Factory.forProtocol(SartoriousReceiver)
+    protocolFactory = Factory.forProtocol(QueuedLineReceiver)
     name = "Sartorious Balance"
 
     def setup (self):
@@ -49,10 +45,21 @@ class Sartorious (Machine):
 
             self.weight._push(result_value)
 
-        def monitor_weight ():
-            self.protocol.write("P").addCallback(interpret_weight)
+        to_monitor = []
 
-        self._tick(monitor_weight, 1)
+        def addMonitor (command, fn, variable: Stream):
+            def interpret (result):
+                variable._push(fn(result), now())
+            
+            to_monitor.append(( command, interpret ))
+
+        addMonitor("P", interpret_weight, self.weight)
+
+        def monitor ():
+            for cmd, fn in to_monitor:
+                self.protocol.write(cmd).addCallback(fn)
+
+        self._monitor = self._tick(monitor, 1)
 
     def stop (self):
         self._stopTicks()
