@@ -45,7 +45,7 @@ class SyrDos(Machine):
             return int(result.split(';')[1].split(' ')[1]) / 100
         
         def interpret_pressure (result: str) -> float:
-            return int(result.split(';')[1].split(' ')[1]) / 100
+            return int(result.split(';')[1].split(' ')[1]) / 10
         
         to_monitor = []
 
