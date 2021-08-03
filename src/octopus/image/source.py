@@ -167,3 +167,44 @@ class camera_proxy (object):
 
     def disconnect (self):
         threads.deferToThread(self.camera.release)
+
+class video_stream (object):
+    def __init__ (self, ip, port, user, password):
+        self.ip = ip
+        self.port = port
+        self.user = user
+        self.password = password
+        self.camera = None
+        self.name = f"video_stream({ip!s})"
+
+        self.address = f"rtsp://{user}:{password}@{ip}:{port}/stream2)"
+
+    @defer.inlineCallbacks
+    def connect (self, _protocolFactory):
+        if self.camera is None:
+
+            self.camera = yield threads.deferToThread(cv2.VideoCapture, self.address)
+
+        defer.returnValue(self)
+
+    @defer.inlineCallbacks
+    def image (self):
+        """
+        Get an image from the camera.
+        
+        Returns an Image object.
+        """
+
+        try:
+            flag, img_array = yield threads.deferToThread(self.camera.read)
+        except SystemError:
+            return
+
+        if flag is False:
+            print ("No image")
+            return
+
+        defer.returnValue(Image(img_array, ColorSpace.BGR))
+
+    def disconnect (self):
+        threads.deferToThread(self.camera.release)
