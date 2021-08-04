@@ -177,7 +177,7 @@ class video_stream (object):
         self.camera = None
         self.name = f"video_stream({ip!s})"
 
-        self.address = f"rtsp://{user}:{password}@{ip}:{port}/stream2)"
+        self.address = f"rtsp://{user}:{password}@{ip}:{port}/stream2"
 
         # rtsp://congocam:congocam@172.19.203.136:554/stream2
 
