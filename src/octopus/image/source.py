@@ -184,6 +184,8 @@ class video_stream (object):
     @defer.inlineCallbacks
     def connect (self, _protocolFactory):
         if self.camera is None:
+            print("The address:")
+            print(self.address)
 
             self.camera = yield threads.deferToThread(cv2.VideoCapture, self.address)
 
