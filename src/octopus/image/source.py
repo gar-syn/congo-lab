@@ -191,6 +191,8 @@ class video_stream (object):
             print("The address:")
             print(self.address)
 
+            cv2.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+
             self.camera = yield threads.deferToThread(cv2.VideoCapture, self.address)
 
         defer.returnValue(self)
