@@ -5,6 +5,8 @@ from typing import Optional
 
 import datetime
 
+import time
+
 # Library imports
 import numpy
 
@@ -202,7 +204,7 @@ class video_stream (object):
         """
 
         try:
-            flag, img_array = yield threads.deferToThread(self.camera.read)
+            flag, img_array = yield threads.deferToThread(self.get_image)
             print(datetime.datetime.now())
         except SystemError:
             return
@@ -215,3 +217,7 @@ class video_stream (object):
 
     def disconnect (self):
         threads.deferToThread(self.camera.release)
+
+    def get_image(self):
+        time.sleep(1)
+        return self.camera.read()
