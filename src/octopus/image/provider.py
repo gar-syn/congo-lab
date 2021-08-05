@@ -19,6 +19,7 @@ class ImageProvider (Machine):
 
     def start (self):
         def monitor ():
+            print("I'm ticking")
             self.image.refresh()
 
         self._tick(monitor, self.update_frequency)

@@ -3,6 +3,8 @@ import cv2
 import json
 from typing import Optional
 
+import datetime
+
 # Library imports
 import numpy
 
@@ -201,6 +203,7 @@ class video_stream (object):
 
         try:
             flag, img_array = yield threads.deferToThread(self.camera.read)
+            print(datetime.datetime.now())
         except SystemError:
             return
 
